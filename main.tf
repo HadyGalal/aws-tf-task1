@@ -13,7 +13,7 @@ terraform {
 
 provider "aws" {
   region = "eu-central-1"
-  profile = "tf-admin"
+  #profile = "tf-admin"
 }
 
 resource "random_id" "suffix" {
