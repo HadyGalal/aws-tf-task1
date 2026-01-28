@@ -1,25 +1,59 @@
-name: Connect to AWS
+name: AWS Deploy (Terraform + CloudFront OAC)
 
+# ── Triggers ───────────────────────────────────────────────────────────────────
 on:
-  workflow_dispatch:
+  # Replace the branch below if your default branch is not 'main'
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # allows manual runs from the Actions tab
 
+# Required for OIDC role assumption
 permissions:
-  id-token: write    # Required for OIDC
+  id-token: write
   contents: read
 
 jobs:
-  aws-connect:
+  deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: tf-apply-main
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ── Configure AWS via OIDC (NO access keys) ──────────────────────────────
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: arn:aws:iam::362976989898:role/terraform-github
-          aws-region: eu-central-1
+          role-to-assume: arn:aws:iam::362976989898:role/tf-1-role
+          aws-region: eu-central-1  # e.g., eu-central-1
 
-      - name: Test AWS CLI
-        run: aws sts get-caller-identity
+      # ── Terraform setup & validate ───────────────────────────────────────────
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Plan & apply (you can split these into separate jobs with approvals)
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+      # ── Optional: Invalidate CloudFront cache when site/ changes ────────────
+      # Requires your Terraform outputs to expose cloudfront_distribution_id
+      - name: Invalidate CloudFront when site/ changed
+        if: contains(join(github.event.head_commit.modified, ' '), 'site/') || contains(join(github.event.commits.*.modified, ' '), 'site/')
+        run: |
+          DIST_ID=$(terraform output -raw cloudfront_distribution_id || true)
+          if [ -n "$DIST_ID" ]; then
+            aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
+          fi
