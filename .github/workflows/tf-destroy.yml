@@ -1,0 +1,52 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:   # Manual trigger from Actions tab
+    inputs:
+      confirm:
+        description: 'Type "DESTROY" to confirm'
+        required: true
+        default: "NO"
+
+permissions:
+  id-token: write   # required for OIDC → AWS
+  contents: read
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+
+    # Prevent multiple destroy jobs running at the same time
+    concurrency:
+      group: tf-destroy
+      cancel-in-progress: false
+
+    steps:
+      - name: Check confirmation
+        if: ${{ github.event.inputs.confirm != 'DESTROY' }}
+        run: |
+          echo "You must type DESTROY to run this workflow."
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---- AWS OIDC AUTH ----
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::362976989898:role/tf-1-role
+          aws-region: eu-central-1
+
+      # ---- TERRAFORM ----
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan Destroy
+        run: terraform plan -destroy -out=tfplan
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
