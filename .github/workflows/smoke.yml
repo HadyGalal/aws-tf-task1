@@ -2,8 +2,9 @@ name: Smoke Check
 
 on:
   push:
-    branches: [ main ]   # change to your default branch if not 'main'
-  workflow_dispatch:      # lets you trigger from the Actions tab
+    branches:
+      - main          # <-- change if your default branch isn't 'main'
+  workflow_dispatch:  # allows manual runs from the Actions tab
 
 jobs:
   hello:
@@ -11,7 +12,6 @@ jobs:
     steps:
       - name: Show context
         run: |
-          echo "Actor: $GITHUB_ACTOR"
-          echo "Ref:   $GITHUB_REF"
-          echo "SHA:   $GITHUB_SHA"
-``
+          echo "Actor: ${GITHUB_ACTOR}"
+          echo "Ref:   ${GITHUB_REF}"
+          echo "SHA:   ${GITHUB_SHA}"
