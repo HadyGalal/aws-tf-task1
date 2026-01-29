@@ -44,11 +44,9 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
 
-      # Invalidate JUST the updated file (faster/cheaper than /*)
       - name: Invalidate CloudFront for task-1.html
         run: |
           DIST_ID=$(terraform output -raw cloudfront_distribution_id || true)
           if [ -n "$DIST_ID" ]; then
-            # Adjust the path below if file is under a folder, e.g., "/site/task-1.html"
             aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/task-1.html"
           fi
