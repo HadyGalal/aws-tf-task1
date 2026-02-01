@@ -1,0 +1,78 @@
+name: Terraform Destroy (Protected)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type EXACTLY: DESTROY'
+        required: true
+        default: 'NO'
+      workspace:
+        description: 'Terraform workspace to destroy (default/dev/etc)'
+        required: false
+        default: 'default'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: 'true'
+  TF_INPUT: 'false'
+  TF_WORKING_DIR: .
+  TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+  AWS_REGION: eu-central-1
+  TERRAFORM_VERSION: 1.6.6
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    environment: dev
+    concurrency:
+      group: tf-destroy
+      cancel-in-progress: false
+
+    steps:
+      - name: Confirm
+        if: ${{ github.event.inputs.confirm != 'DESTROY' }}
+        run: |
+          echo "You must type DESTROY to run this workflow."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: tf-plugin-cache-${{ runner.os }}-v1
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::362976989898:role/tf-1-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - run: aws sts get-caller-identity
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: terraform init (reconfigure)
+        run: terraform init -reconfigure
+
+      - name: Select workspace (create if missing)
+        run: |
+          WS="${{ github.event.inputs.workspace }}"
+          terraform workspace select "$WS" || terraform workspace new "$WS"
+
+      - name: List state
+        run: terraform state list || true
+
+      - name: Plan destroy
+        run: terraform plan -destroy -out=tfplan -no-color
+
+      - name: Show destroy plan
+        run: terraform show -no-color tfplan
+
+      - name: Destroy (apply plan)
+        run: terraform apply -auto-approve tfplan

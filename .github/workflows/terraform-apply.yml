@@ -1,0 +1,79 @@
+name: Terraform CD (Apply)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**/*.tf'
+      - 'modules/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: 'true'
+  TF_INPUT: 'false'
+  TF_WORKING_DIR: .
+  TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+  AWS_REGION: eu-central-1
+  TERRAFORM_VERSION: 1.6.6
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: dev
+    concurrency:
+      group: tf-apply-${{ github.ref }}
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: tf-plugin-cache-${{ runner.os }}-v1
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::362976989898:role/tf-1-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: terraform init
+        run: terraform init -upgrade
+
+      - name: terraform validate
+        run: terraform validate -no-color
+
+      - name: terraform plan
+        run: |
+          terraform plan -no-color -out=tfplan
+          terraform show -no-color tfplan > tfplan.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.sha }}
+          path: |
+            tfplan
+            tfplan.txt
+          retention-days: 7
+
+      - name: terraform apply
+        run: terraform apply -auto-approve tfplan
+
+      # Optional: one-time broad invalidation on infra changes
+      - name: CloudFront invalidation (/*)
+        run: |
+          set -e
+          DIST_ID=$(terraform output -raw cloudfront_distribution_id 2>/dev/null || true)
+          if [ -n "$DIST_ID" ]; then
+            echo "Invalidating CloudFront distribution $DIST_ID"
+            aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
+          else
+            echo "No cloudfront_distribution_id output; skipping invalidation."
+          fi
