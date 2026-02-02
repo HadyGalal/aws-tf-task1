@@ -27,7 +27,7 @@ env:
   TF_IN_AUTOMATION: 'true'
   TF_INPUT: 'false'
   TF_WORKING_DIR: .
-  TF_PLUGIN_CACHE_DIR: ${{ env.HOME }}/.terraform.d/plugin-cache
+  TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
   AWS_REGION: eu-central-1
   TERRAFORM_VERSION: 1.6.6
 
@@ -46,22 +46,6 @@ jobs:
           echo "BASE_REF=$GITHUB_BASE_REF"
           echo "REPO=$GITHUB_REPOSITORY"
       - uses: actions/checkout@v4
-      
-      - name: Create Terraform plugin cache directory
-        run: |
-          mkdir -p "${HOME}/.terraform.d/plugin-cache"
-          echo "TF_PLUGIN_CACHE_DIR=${HOME}/.terraform.d/plugin-cache" >> $GITHUB_ENV
-      
-      - name: Cache Terraform plugin dir
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
-          key: tf-plugin-cache-${{ runner.os }}-v1
-
-      - name: Debug cache env
-        run: |
-          echo "TF_PLUGIN_CACHE_DIR=${TF_PLUGIN_CACHE_DIR}"
-          ls -la "${TF_PLUGIN_CACHE_DIR}"
 
       - uses: actions/cache@v4
         with:
