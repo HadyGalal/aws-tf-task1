@@ -33,10 +33,10 @@ locals {
 
 terraform {
   backend "s3" {
-    bucket         = "my-tf-state-bucket"
-    key            = "static-site/dev/terraform.tfstate"
+    bucket         = "my-tf-state-bucket-euc1"
+    key            = "static-site/prod/terraform.tfstate"
     region         = "eu-central-1"
-    dynamodb_table = "my-tf-locks"
+    dynamodb_table = "tf-locks-euc1"
     encrypt        = true
   }
 }
