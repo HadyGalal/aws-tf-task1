@@ -30,3 +30,13 @@ locals {
     ManagedBy   = "terraform"
   }
 }
+
+terraform {
+  backend "s3" {
+    bucket         = "my-tf-state-bucket"
+    key            = "static-site/dev/terraform.tfstate"
+    region         = "eu-central-1"
+    dynamodb_table = "my-tf-locks"
+    encrypt        = true
+  }
+}
