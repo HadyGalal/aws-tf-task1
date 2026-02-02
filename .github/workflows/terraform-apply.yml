@@ -30,9 +30,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create Terraform plugin cache directory
+        run: mkdir -p ~/.terraform.d/plugin-cache
+
       - uses: actions/cache@v4
         with:
-          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          path: ~/.terraform.d/plugin-cache
           key: tf-plugin-cache-${{ runner.os }}-v1
 
       - uses: aws-actions/configure-aws-credentials@v5
