@@ -1,12 +1,22 @@
 name: Terraform CI (PR)
 
 on:
-  pull_request:
-    branches: [ main ]
-    paths:
-      - '**/*.tf'
-      - 'modules/**'
-      - '.github/workflows/terraform-*.yml'
+  #pull_request:
+  #  branches: [ main ]
+  #  paths:
+  #    - '**/*.tf'
+  #    - 'modules/**'
+  #    - '.github/workflows/terraform-*.yml'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type EXACTLY: DESTROY'
+        required: true
+        default: 'NO'
+      workspace:
+        description: 'Terraform workspace to destroy (default/dev/etc)'
+        required: false
+        default: 'default'
 
 permissions:
   id-token: write
