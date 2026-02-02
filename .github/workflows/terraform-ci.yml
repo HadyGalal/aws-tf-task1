@@ -1,12 +1,22 @@
 name: Terraform CI (PR)
 
 on:
-  pull_request:
-    branches: [ main ]
-    paths:
-      - '**/*.tf'
-      - 'modules/**'
-      - '.github/workflows/terraform-*.yml'
+  #pull_request:
+  #  branches: [ main ]
+  #  paths:
+  #    - '**/*.tf'
+  #    - 'modules/**'
+  #    - '.github/workflows/terraform-*.yml'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type EXACTLY: DESTROY'
+        required: true
+        default: 'NO'
+      workspace:
+        description: 'Terraform workspace to destroy (default/dev/etc)'
+        required: false
+        default: 'default'
 
 permissions:
   id-token: write
@@ -29,6 +39,12 @@ jobs:
       cancel-in-progress: true
 
     steps:
+      - name: Dump GitHub OIDC token claims
+        run: |
+          echo "REF=$GITHUB_REF"
+          echo "HEAD_REF=$GITHUB_HEAD_REF"
+          echo "BASE_REF=$GITHUB_BASE_REF"
+          echo "REPO=$GITHUB_REPOSITORY"
       - uses: actions/checkout@v4
 
       - uses: actions/cache@v4
