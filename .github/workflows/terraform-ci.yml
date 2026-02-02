@@ -38,7 +38,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: arn:aws:iam::362976989898:role/tf-1-role
+          role-to-assume: arn:aws:iam::362976989898:role/aws-tf-infra
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: hashicorp/setup-terraform@v3
