@@ -40,6 +40,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::362976989898:role/aws-tf-infra
           aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-session
 
       - uses: hashicorp/setup-terraform@v3
         with:
