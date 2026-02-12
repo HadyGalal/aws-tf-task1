@@ -14,7 +14,7 @@ env:
   AWS_REGION: eu-central-1
 
 jobs:
-  plan:
+  infra-dev:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     environment:
