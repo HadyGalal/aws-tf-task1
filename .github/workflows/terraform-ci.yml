@@ -52,6 +52,4 @@ jobs:
               echo "Deploying Terraform code"
               cd ./terraform
               terraform --version
-              ls -al
-              echo "Done"
 
