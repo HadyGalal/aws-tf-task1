@@ -36,6 +36,10 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+      
+      - name: Create plugin cache directory
+        run: |
+          mkdir -p ~/.terraform.d/plugin-cache
 
       - name: terraform fmt (check)
         run: terraform fmt -check -diff
