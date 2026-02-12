@@ -1,27 +1,12 @@
 name: Terraform CI (PR)
 
 on:
-  pull_request:
-    branches: [ main ]
-    paths:
-      - '**/*.tf'
-      - 'modules/**'
-      - '.github/workflows/terraform-*.yml'
-  #workflow_dispatch:
-  #  inputs:
-  #    confirm:
-   #     description: 'Type EXACTLY: DESTROY'
-    #    required: true
-     #   default: 'NO'
-     # workspace:
-      #  description: 'Terraform workspace to destroy (default/dev/etc)'
-       # required: false
-        #default: 'default'
-
+  push:
+    branches:
+      - main
 permissions:
   id-token: write
   contents: read
-  pull-requests: write
 
 env:
   TF_IN_AUTOMATION: 'true'
@@ -34,23 +19,20 @@ env:
 jobs:
   plan:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     concurrency:
       group: tf-plan-${{ github.ref }}
       cancel-in-progress: true
-
+    environment:
+      name: dev
     steps:
-      - name: Dump GitHub OIDC token claims
-        run: |
-          echo "REF=$GITHUB_REF"
-          echo "HEAD_REF=$GITHUB_HEAD_REF"
-          echo "BASE_REF=$GITHUB_BASE_REF"
-          echo "REPO=$GITHUB_REPOSITORY"
-      - uses: actions/checkout@v4
+      - name: Check out repository code
+        uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::362976989898:role/aws-tf-infra
           aws-region: ${{ env.AWS_REGION }}
-
+          role-session-name: github-session
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
