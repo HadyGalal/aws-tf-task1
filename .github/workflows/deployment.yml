@@ -6,7 +6,7 @@ on:
       - main
       - dev
   workflow_dispatch:
-  
+
 permissions:
   id-token: write
   contents: read
@@ -19,7 +19,7 @@ env:
 jobs:
   infra-dev:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' && github.ref == 'refs/heads/main' && github.ref == 'refs/heads/dev' }}
+    if: ${{ github.event_name == 'pull_request' }}
     environment:
       name: dev
     steps:
