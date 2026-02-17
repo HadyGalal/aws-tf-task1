@@ -42,6 +42,3 @@ terraform {
 }
 
 # this is fake change
-# this is fake change2
-# this is fake change3
-# this is fake change4
